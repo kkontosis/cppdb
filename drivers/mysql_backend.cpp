@@ -1,11 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////////
-//                                                                             
-//  Copyright (C) 2010-2011  Artyom Beilis (Tonkikh) <artyomtnk@yahoo.com>     
-//                                                                             
+//
+//  Copyright (C) 2010-2011  Artyom Beilis (Tonkikh) <artyomtnk@yahoo.com>
+//
 //  Distributed under:
 //
 //                   the Boost Software License, Version 1.0.
-//              (See accompanying file LICENSE_1_0.txt or copy at 
+//              (See accompanying file LICENSE_1_0.txt or copy at
 //                     http://www.boost.org/LICENSE_1_0.txt)
 //
 //  or (at your opinion) under:
@@ -34,14 +34,16 @@
 
 #include <iostream>
 
+typedef bool my_bool;
+
 namespace cppdb {
 
-namespace mysql_backend {	
+namespace mysql_backend {
 
-class cppdb_myerror : public cppdb_error 
+class cppdb_myerror : public cppdb_error
 {
 public:
-	cppdb_myerror(std::string const &str) : 
+	cppdb_myerror(std::string const &str) :
 		cppdb_error("cppdb::mysql::" + str)
 	{
 	}
@@ -54,7 +56,7 @@ namespace unprep {
 		/// Check if the next row in the result exists. If the DB engine can't perform
 		/// this check without loosing data for current row, it should return next_row_unknown.
 		///
-		virtual next_row has_next() 
+		virtual next_row has_next()
 		{
 			if(!res_)
 				return last_row_reached;
@@ -67,7 +69,7 @@ namespace unprep {
 		/// Move to next row. Should be called before first access to any of members. If no rows remain
 		/// return false, otherwise return true
 		///
-		virtual bool next() 
+		virtual bool next()
 		{
 			if(!res_)
 				return false;
@@ -99,7 +101,7 @@ namespace unprep {
 			if(col < 0 || col >= cols_)
 				throw invalid_column();
 			unsigned long *lengths = mysql_fetch_lengths(res_);
-			if(lengths==0) 
+			if(lengths==0)
 				throw cppdb_myerror("Can't get length of column");
 			len = lengths[col];
 			return row_[col];
@@ -115,11 +117,11 @@ namespace unprep {
 			v = parse_number<T>(std::string(s,len),fmt_);
 			return true;
 		}
-		virtual bool fetch(int col,short &v) 
+		virtual bool fetch(int col,short &v)
 		{
 			return do_fetch(col,v);;
 		}
-		virtual bool fetch(int col,unsigned short &v) 
+		virtual bool fetch(int col,unsigned short &v)
 		{
 			return do_fetch(col,v);
 		}
@@ -127,7 +129,7 @@ namespace unprep {
 		{
 			return do_fetch(col,v);
 		}
-		virtual bool fetch(int col,unsigned &v) 
+		virtual bool fetch(int col,unsigned &v)
 		{
 			return do_fetch(col,v);
 		}
@@ -186,7 +188,7 @@ namespace unprep {
 		/// Should throw invalid_column() \a col value is invalid. If the data can't be converted
 		/// to date-time it should throw bad_value_cast()
 		///
-		virtual bool fetch(int col,std::tm &v) 
+		virtual bool fetch(int col,std::tm &v)
 		{
 			size_t len;
 			char const *s=at(col,len);
@@ -199,18 +201,18 @@ namespace unprep {
 		///
 		/// Check if the column \a col is NULL starting from 0, should throw invalid_column() if the index out of range
 		///
-		virtual bool is_null(int col) 
+		virtual bool is_null(int col)
 		{
 			return at(col) == 0;
 		}
 		///
 		/// Return the number of columns in the result. Should be valid even without calling next() first time.
 		///
-		virtual int cols() 
+		virtual int cols()
 		{
 			return cols_;
 		}
-		virtual std::string column_to_name(int col) 
+		virtual std::string column_to_name(int col)
 		{
 			if(col < 0 || col >=cols_)
 				throw invalid_column();
@@ -222,7 +224,7 @@ namespace unprep {
 			}
 			return flds[col].name;
 		}
-		virtual int name_to_column(std::string const &name) 
+		virtual int name_to_column(std::string const &name)
 		{
 			if(!res_)
 				throw empty_row_access();
@@ -237,8 +239,8 @@ namespace unprep {
 		}
 
 		// End of API
-		
-		result(MYSQL *conn) : 
+
+		result(MYSQL *conn) :
 			res_(0),
 			cols_(0),
 			current_row_(0),
@@ -268,10 +270,10 @@ namespace unprep {
 		unsigned current_row_;
 		MYSQL_ROW row_;
 	};
-	
+
 	class statement : public backend::statement {
 	public:
-		virtual std::string const &sql_query() 
+		virtual std::string const &sql_query()
 		{
 			return query_;
 		}
@@ -284,7 +286,7 @@ namespace unprep {
 		{
 			bind(col,s,s+strlen(s));
 		}
-		virtual void bind(int col,char const *b,char const *e) 
+		virtual void bind(int col,char const *b,char const *e)
 		{
 			std::vector<char> buf(2*(e-b)+1);
 			size_t len = mysql_real_escape_string(conn_,&buf.front(),b,e-b);
@@ -295,7 +297,7 @@ namespace unprep {
 			s.append(&buf.front(),len);
 			s+='\'';
 		}
-		virtual void bind(int col,std::tm const &v) 
+		virtual void bind(int col,std::tm const &v)
 		{
 			std::string &s = at(col);
 			s.clear();
@@ -345,7 +347,7 @@ namespace unprep {
 		{
 			do_bind(col,v);
 		}
-		virtual void bind(int col,double v) 
+		virtual void bind(int col,double v)
 		{
 			do_bind(col,v);
 		}
@@ -357,7 +359,7 @@ namespace unprep {
 		{
 			at(col)="NULL";
 		}
-		virtual long long sequence_last(std::string const &/*sequence*/) 
+		virtual long long sequence_last(std::string const &/*sequence*/)
 		{
 			return mysql_insert_id(conn_);
 		}
@@ -365,7 +367,7 @@ namespace unprep {
 		{
 			return mysql_affected_rows(conn_);
 		}
-		
+
 		void bind_all(std::string &real_query)
 		{
 			size_t total = query_.size();
@@ -384,9 +386,9 @@ namespace unprep {
 			real_query.append(query_,pos_,std::string::npos);
 		}
 
-		virtual result *query() 
+		virtual result *query()
 		{
-			std::string real_query;	
+			std::string real_query;
 			bind_all(real_query);
 			reset_params();
 			if(mysql_real_query(conn_,real_query.c_str(),real_query.size())) {
@@ -394,10 +396,10 @@ namespace unprep {
 			}
 			return new result(conn_);
 		}
-		
-		virtual void exec() 
+
+		virtual void exec()
 		{
-			std::string real_query;	
+			std::string real_query;
 			bind_all(real_query);
 			reset_params();
 			if(mysql_real_query(conn_,real_query.c_str(),real_query.size())) {
@@ -422,7 +424,7 @@ namespace unprep {
 			params_.clear();
 			params_.resize(params_no_,"NULL");
 		}
-		
+
 		statement(std::string const &q,MYSQL *conn) :
 			query_(q),
 			conn_(conn),
@@ -487,7 +489,7 @@ namespace prep {
 		/// Check if the next row in the result exists. If the DB engine can't perform
 		/// this check without loosing data for current row, it should return next_row_unknown.
 		///
-		virtual next_row has_next() 
+		virtual next_row has_next()
 		{
 			if(current_row_ >= mysql_stmt_num_rows(stmt_))
 				return last_row_reached;
@@ -498,7 +500,7 @@ namespace prep {
 		/// Move to next row. Should be called before first access to any of members. If no rows remain
 		/// return false, otherwise return true
 		///
-		virtual bool next() 
+		virtual bool next()
 		{
 			current_row_ ++;
 			reset();
@@ -508,7 +510,7 @@ namespace prep {
 				}
 			}
 			int r = mysql_stmt_fetch(stmt_);
-			if(r==MYSQL_NO_DATA) { 
+			if(r==MYSQL_NO_DATA) {
 				return false;
 			}
 			if(r==MYSQL_DATA_TRUNCATED) {
@@ -551,7 +553,7 @@ namespace prep {
 			v=parse_number<T>(std::string(d.ptr,d.length),fmt_);
 			return true;
 		}
-		virtual bool fetch(int col,short &v) 
+		virtual bool fetch(int col,short &v)
 		{
 			return do_fetch(col,v);;
 		}
@@ -562,7 +564,7 @@ namespace prep {
 		/// Should throw invalid_column() \a col value is invalid, should throw bad_value_cast() if the underlying data
 		/// can't be converted to integer or its range is not supported by the integer type.
 		///
-		virtual bool fetch(int col,unsigned short &v) 
+		virtual bool fetch(int col,unsigned short &v)
 		{
 			return do_fetch(col,v);
 		}
@@ -584,7 +586,7 @@ namespace prep {
 		/// Should throw invalid_column() \a col value is invalid, should throw bad_value_cast() if the underlying data
 		/// can't be converted to integer or its range is not supported by the integer type.
 		///
-		virtual bool fetch(int col,unsigned &v) 
+		virtual bool fetch(int col,unsigned &v)
 		{
 			return do_fetch(col,v);
 		}
@@ -702,7 +704,7 @@ namespace prep {
 		/// Should throw invalid_column() \a col value is invalid. If the data can't be converted
 		/// to date-time it should throw bad_value_cast()
 		///
-		virtual bool fetch(int col,std::tm &v) 
+		virtual bool fetch(int col,std::tm &v)
 		{
 			std::string tmp;
 			if(!fetch(col,tmp))
@@ -713,18 +715,18 @@ namespace prep {
 		///
 		/// Check if the column \a col is NULL starting from 0, should throw invalid_column() if the index out of range
 		///
-		virtual bool is_null(int col) 
+		virtual bool is_null(int col)
 		{
 			return at(col).is_null;
 		}
 		///
 		/// Return the number of columns in the result. Should be valid even without calling next() first time.
 		///
-		virtual int cols() 
+		virtual int cols()
 		{
 			return cols_;
 		}
-		virtual std::string column_to_name(int col) 
+		virtual std::string column_to_name(int col)
 		{
 			if(col < 0 || col >=cols_)
 				throw invalid_column();
@@ -734,7 +736,7 @@ namespace prep {
 			}
 			return flds[col].name;
 		}
-		virtual int name_to_column(std::string const &name) 
+		virtual int name_to_column(std::string const &name)
 		{
 			MYSQL_FIELD *flds=mysql_fetch_fields(meta_);
 			if(!flds) {
@@ -747,8 +749,8 @@ namespace prep {
 		}
 
 		// End of API
-		
-		result(MYSQL_STMT *stmt) : 
+
+		result(MYSQL_STMT *stmt) :
 			stmt_(stmt), current_row_(0),meta_(0)
 		{
 			fmt_.imbue(std::locale::classic());
@@ -798,7 +800,7 @@ namespace prep {
 			unsigned long length;
 			std::string value;
 			void *buffer;
-			param() : 
+			param() :
 				is_null(1),
 				is_blob(false),
 				length(0),
@@ -823,7 +825,7 @@ namespace prep {
 			{
 				set_str(cppdb::format_time(t));
 			}
-			void bind_it(MYSQL_BIND *b) 
+			void bind_it(MYSQL_BIND *b)
 			{
 				b->is_null = &is_null;
 				if(!is_null) {
@@ -842,9 +844,9 @@ namespace prep {
 		// Begin of API
 		///
 		/// Get the query the statement works with. Return it as is, used as key for statement
-		/// caching 
+		/// caching
 		///
-		virtual std::string const &sql_query() 
+		virtual std::string const &sql_query()
 		{
 			return query_;
 		}
@@ -881,7 +883,7 @@ namespace prep {
 		/// ignore if it is impossible to know whether the placeholder exists without special
 		/// support from back-end.
 		///
-		virtual void bind(int col,char const *b,char const *e) 
+		virtual void bind(int col,char const *b,char const *e)
 		{
 			at(col).set(b,e);
 		}
@@ -892,7 +894,7 @@ namespace prep {
 		/// ignore if it is impossible to know whether the placeholder exists without special
 		/// support from back-end.
 		///
-		virtual void bind(int col,std::tm const &v) 
+		virtual void bind(int col,std::tm const &v)
 		{
 			at(col).set(v);
 		}
@@ -937,7 +939,7 @@ namespace prep {
 		/// ignore if it is impossible to know whether the placeholder exists without special
 		/// support from back-end.
 		///
-		/// May throw bad_value_cast() if the value out of supported range by the DB. 
+		/// May throw bad_value_cast() if the value out of supported range by the DB.
 		///
 		virtual void bind(int col,unsigned v)
 		{
@@ -950,7 +952,7 @@ namespace prep {
 		/// ignore if it is impossible to know whether the placeholder exists without special
 		/// support from back-end.
 		///
-		/// May throw bad_value_cast() if the value out of supported range by the DB. 
+		/// May throw bad_value_cast() if the value out of supported range by the DB.
 		///
 		virtual void bind(int col,long v)
 		{
@@ -963,7 +965,7 @@ namespace prep {
 		/// ignore if it is impossible to know whether the placeholder exists without special
 		/// support from back-end.
 		///
-		/// May throw bad_value_cast() if the value out of supported range by the DB. 
+		/// May throw bad_value_cast() if the value out of supported range by the DB.
 		///
 		virtual void bind(int col,unsigned long v)
 		{
@@ -976,7 +978,7 @@ namespace prep {
 		/// ignore if it is impossible to know whether the placeholder exists without special
 		/// support from back-end.
 		///
-		/// May throw bad_value_cast() if the value out of supported range by the DB. 
+		/// May throw bad_value_cast() if the value out of supported range by the DB.
 		///
 		virtual void bind(int col,long long v)
 		{
@@ -989,7 +991,7 @@ namespace prep {
 		/// ignore if it is impossible to know whether the placeholder exists without special
 		/// support from back-end.
 		///
-		/// May throw bad_value_cast() if the value out of supported range by the DB. 
+		/// May throw bad_value_cast() if the value out of supported range by the DB.
 		///
 		virtual void bind(int col,unsigned long long v)
 		{
@@ -1002,7 +1004,7 @@ namespace prep {
 		/// ignore if it is impossible to know whether the placeholder exists without special
 		/// support from back-end.
 		///
-		virtual void bind(int col,double v) 
+		virtual void bind(int col,double v)
 		{
 			do_bind(col,v);
 		}
@@ -1037,7 +1039,7 @@ namespace prep {
 		///
 		/// MUST throw not_supported_by_backend() if such option is not supported by the DB engine.
 		///
-		virtual long long sequence_last(std::string const &/*sequence*/) 
+		virtual long long sequence_last(std::string const &/*sequence*/)
 		{
 			return mysql_stmt_insert_id(stmt_);
 		}
@@ -1050,7 +1052,7 @@ namespace prep {
 		{
 			return mysql_stmt_affected_rows(stmt_);
 		}
-		
+
 		void bind_all()
 		{
 			if(!params_.empty()) {
@@ -1065,7 +1067,7 @@ namespace prep {
 		///
 		/// Return SQL Query result, MAY throw cppdb_error if the statement is not a query
 		///
-		virtual result *query() 
+		virtual result *query()
 		{
 			bind_all();
 			if(mysql_stmt_execute(stmt_)) {
@@ -1076,7 +1078,7 @@ namespace prep {
 		///
 		/// Execute a statement, MAY throw cppdb_error if the statement returns results.
 		///
-		virtual void exec() 
+		virtual void exec()
 		{
 			bind_all();
 			if(mysql_stmt_execute(stmt_)) {
@@ -1094,7 +1096,7 @@ namespace prep {
 		// End of API
 
 		// Caching support
-		
+
 		statement(std::string const &q,MYSQL *conn) :
 			query_(q),
 			stmt_(0),
@@ -1158,7 +1160,7 @@ class connection;
 
 class connection : public backend::connection {
 public:
-	connection(connection_info const &ci) : 
+	connection(connection_info const &ci) :
 		backend::connection(ci),
 		conn_(0)
 	{
@@ -1198,11 +1200,13 @@ public:
 				mysql_set_option(MYSQL_OPT_CONNECT_TIMEOUT, &connect_timeout);
 			}
 		}
+#if MYSQL_VERSION_ID < 80000
 		if(ci.has("opt_guess_connection")) {
 			if(ci.get("opt_guess_connection", 1)) {
 				mysql_set_option(MYSQL_OPT_GUESS_CONNECTION, NULL);
 			}
 		}
+#endif
 		if(ci.has("opt_local_infile")) {
 			if(unsigned local_infile = ci.get("opt_local_infile", 0)) {
 				mysql_set_option(MYSQL_OPT_CONNECT_TIMEOUT, &local_infile);
@@ -1235,6 +1239,7 @@ public:
 			mysql_set_option(MYSQL_PLUGIN_DIR, plugin_dir.c_str());
 		}
 #endif
+#if MYSQL_VERSION_ID < 80000
 		std::string set_client_ip = ci.get("set_client_ip", "");
 		if(!set_client_ip.empty()) {
 			mysql_set_option(MYSQL_SET_CLIENT_IP, set_client_ip.c_str());
@@ -1255,6 +1260,7 @@ public:
 				mysql_set_option(MYSQL_OPT_USE_REMOTE_CONNECTION, NULL);
 			}
 		}
+#endif
 		if(ci.has("opt_write_timeout")) {
 			if(unsigned write_timeout = ci.get("opt_write_timeout", 0)) {
 				mysql_set_option(MYSQL_OPT_WRITE_TIMEOUT, &write_timeout);
@@ -1274,7 +1280,7 @@ public:
 				mysql_set_option(MYSQL_REPORT_DATA_TRUNCATION, &value);
 			}
 		}
-#if MYSQL_VERSION_ID >= 40101
+#if MYSQL_VERSION_ID >= 40101 && MYSQL_VERSION_ID < 50700
 		if(ci.has("secure_auth")) {
 			if(unsigned secure = ci.get("secure_auth", 1)) {
 				my_bool value = secure;
@@ -1294,7 +1300,7 @@ public:
 		if(!shared_memory_base_name.empty()) {
 			mysql_set_option(MYSQL_SHARED_MEMORY_BASE_NAME, shared_memory_base_name.c_str());
 		}
-		
+
 		if(!mysql_real_connect(conn_,phost,puser,ppassword,pdatabase,port,punix_socket,0)) {
 			std::string err="unknown";
 			try { err = mysql_error(conn_); }catch(...){}
@@ -1307,9 +1313,9 @@ public:
 	{
 		mysql_close(conn_);
 	}
-	// API 
-	
-	void exec(std::string const &s) 
+	// API
+
+	void exec(std::string const &s)
 	{
 		if(mysql_real_query(conn_,s.c_str(),s.size())) {
 			throw cppdb_myerror(mysql_error(conn_));
@@ -1320,7 +1326,7 @@ public:
 	/// Start new isolated transaction. Would not be called
 	/// withing other transaction on current connection.
 	///
-	virtual void begin() 
+	virtual void begin()
 	{
 		exec("BEGIN");
 	}
@@ -1328,14 +1334,14 @@ public:
 	/// Commit the transaction, you may assume that is called after begin()
 	/// was called.
 	///
-	virtual void commit() 
+	virtual void commit()
 	{
 		exec("COMMIT");
 	}
 	///
 	/// Rollback the transaction. MUST never throw!!!
 	///
-	virtual void rollback() 
+	virtual void rollback()
 	{
 		try {
 			exec("ROLLBACK");
@@ -1358,7 +1364,7 @@ public:
 	///
 	/// Escape a string for inclusion in SQL query. May throw not_supported_by_backend() if not supported by backend.
 	///
-	virtual std::string escape(std::string const &s) 
+	virtual std::string escape(std::string const &s)
 	{
 		return escape(s.c_str(),s.c_str()+s.size());
 	}
@@ -1372,7 +1378,7 @@ public:
 	///
 	/// Escape a string for inclusion in SQL query. May throw not_supported_by_backend() if not supported by backend.
 	///
-	virtual std::string escape(char const *b,char const *e) 
+	virtual std::string escape(char const *b,char const *e)
 	{
 		std::vector<char> buf(2*(e-b)+1);
 		size_t len = mysql_real_escape_string(conn_,&buf.front(),b,e-b);
@@ -1383,7 +1389,7 @@ public:
 	///
 	/// Get the name of the driver, for example sqlite3, odbc
 	///
-	virtual std::string driver() 
+	virtual std::string driver()
 	{
 		return "mysql";
 	}
@@ -1397,11 +1403,11 @@ public:
 	}
 
 	// API
-	
+
 private:
 	///
 	/// Set a custom MYSQL option on the connection.
-	/// 
+	///
 	///
 	void mysql_set_option(mysql_option option, const void* arg)
 	{
